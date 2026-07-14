@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE DRAFT — speculative decoding</title>
+<style>
+  :root{--bg:#0f1330;--ink:#eaf1ff;--ink2:#aeb9e6;--dim:#7a83b0;--line:#242c56;
+    --cyan:#46c7d8;--orange:#f0913a;--purple:#b48ad8;--ok:#65d6a2;--miss:#e0705a;--brass:#e6c069;
+    --lit:#65d6c0;--fig:#c1a6ea;--wall:#e88a76}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:radial-gradient(ellipse at 50% -10%,#182052,#0b0f26 80%);color:var(--ink);
+    font-family:ui-sans-serif,system-ui,sans-serif;padding:22px 14px;min-height:100vh;font-size:13px}
+  .wrap{max-width:900px;margin:0 auto}
+  nav{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;justify-content:center;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:10.5px;border-bottom:1px solid var(--line);padding-bottom:9px;margin-bottom:14px}
+  nav b{color:var(--brass);font-weight:800;letter-spacing:.06em} nav a{color:var(--ink2);text-decoration:none} nav a:hover{color:var(--cyan)} nav .home{color:var(--dim)}
+  header{text-align:center;margin-bottom:10px}
+  header h1{font-size:21px;font-weight:700;font-family:'Iowan Old Style',Palatino,Georgia,serif;color:var(--cyan);letter-spacing:.02em}
+  header .sub{font-size:12px;color:var(--ink2);margin:6px auto 0;max-width:720px;font-style:italic;line-height:1.5}
+  .tag{display:inline-block;font-size:9px;font-weight:800;padding:1px 6px;border-radius:9px;vertical-align:middle}
+  .tag.lit{background:rgba(101,214,192,.14);color:var(--lit);border:1px solid var(--lit)}
+  .tag.fig{background:rgba(193,166,234,.13);color:var(--fig);border:1px solid var(--fig)}
+  .tag.wall{background:rgba(232,138,118,.12);color:var(--wall);border:1px solid var(--wall)}
+  .tiers{text-align:center;font-size:10.5px;color:var(--dim);margin-top:6px}
+  .ctl{display:flex;flex-wrap:wrap;gap:12px 16px;justify-content:center;align-items:center;margin:16px 0 6px}
+  button{background:transparent;color:var(--cyan);border:1px solid var(--cyan);padding:7px 15px;font-family:ui-monospace,monospace;font-weight:700;cursor:pointer;font-size:11px;border-radius:6px}
+  button:hover{background:rgba(70,199,216,.12)}
+  .seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+  .seg button{border:none;border-radius:0;color:var(--dim);padding:6px 12px}
+  .seg button.on{color:var(--ink);background:rgba(180,138,216,.18)}
+  label{font-family:ui-monospace,monospace;font-size:11px;color:var(--ink2)} input[type=range]{accent-color:var(--cyan);width:120px;vertical-align:middle}
+  .stage{display:grid;grid-template-columns:1fr;gap:12px;margin-top:12px}
+  .panel{background:rgba(6,8,22,.5);border:1px solid var(--line);border-radius:11px;padding:13px 14px}
+  .panel h2{font-size:10.5px;font-weight:800;letter-spacing:.12em;color:var(--dim);text-transform:uppercase;margin-bottom:10px}
+  #tape{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;line-height:2.1;min-height:70px;letter-spacing:.02em;word-break:break-word}
+  .tok{padding:2px 5px;border-radius:5px;margin:0 1px}
+  .tok.acc{background:rgba(101,214,162,.16);color:var(--ok);border:1px solid rgba(101,214,162,.5)}
+  .tok.cor{background:rgba(240,145,58,.16);color:var(--orange);border:1px solid rgba(240,145,58,.55)}
+  .tok.bon{background:rgba(70,199,216,.14);color:var(--cyan);border:1px solid rgba(70,199,216,.5)}
+  .tok.rej{color:var(--miss);text-decoration:line-through;opacity:.6}
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:680px){.cols{grid-template-columns:1fr}}
+  .hud{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;line-height:1.9}
+  .hud .k{color:var(--dim)} .hud b{color:var(--ink)} .big{font-size:16px}
+  #dist{width:100%;height:150px;display:block}
+  footer{font-size:11px;color:var(--ink2);line-height:1.6;border-top:1px solid var(--line);padding-top:13px;margin-top:16px}
+  footer b{color:var(--ink)} .fdim{color:var(--dim)}
+</style></head><body><div class="wrap">
+<nav>
+  <b>A SCANNER DARKLY</b><span class="home">›</span>
+  <a href="../the-stitch/">the stitch</a>
+  <a href="../the-cleave/">the cleave</a>
+  <a href="../the-dark-glass/">the dark glass</a>
+  <a href="../the-inference-layer/">the inference layer ↗</a>
+  <a class="home" href="../ud0/">ud0 ⌂</a>
+</nav>
+<header>
+  <h1>THE DRAFT</h1>
+  <div class="sub">A cheap draft guesses a whole run of tokens; the big model checks them <b>all at once</b> and keeps the longest prefix it agrees with. The trick isn't approximation — the tokens it emits are drawn from the <b>exact same distribution</b> the big model would have produced alone. Free speed (under an idealized cost model), provably no drift.</div>
+  <div class="tiers"><span class="tag lit">LIT</span> the accept/reject rule, the acceptance rate, tokens per target-pass, the exactness — all live &nbsp; <span class="tag fig">FIG</span> two toy 6-word distributions, an idealized cost model &nbsp; <span class="tag wall">WALL</span> real wall-clock speedup on real hardware</div>
+</header>
+
+<div class="ctl">
+  <span class="seg" id="align">
+    <button data-a="hi" class="on">draft ≈ target &nbsp;(aligned)</button>
+    <button data-a="lo">draft ≠ target &nbsp;(misaligned)</button>
+  </span>
+  <label>speculation length γ = <b id="gv" style="color:var(--brass)">4</b></label>
+  <input type="range" id="gamma" min="1" max="8" step="1" value="4">
+  <button id="step">▶ one block</button>
+  <button id="run">▶▶ run</button>
+  <button id="reset">reset</button>
+</div>
+
+<div class="panel">
+  <h2>The emitted sequence — accepted / corrected / bonus</h2>
+  <div id="tape"></div>
+  <div style="font-size:10px;color:var(--dim);margin-top:8px;line-height:1.6">Each block is <b>one</b> forward pass of the big (target) model. It verifies all γ drafted tokens in parallel: <span style="color:var(--ok)">■ accepted</span> as-is, until the first <span style="color:var(--miss)">rejected</span> guess, which is replaced by a <span style="color:var(--orange)">■ corrected</span> token drawn from the residual (p−q)₊. If the whole draft survives, a <span style="color:var(--cyan)">■ bonus</span> token comes free from the target. One target pass → many tokens.</div>
+</div>
+
+<div class="cols">
+  <div class="panel">
+    <h2>Live readout</h2>
+    <div class="hud" id="hud"></div>
+  </div>
+  <div class="panel">
+    <h2>Exactness — emitted vs the target it must equal</h2>
+    <canvas id="dist" width="420" height="150"></canvas>
+    <div style="font-size:10px;color:var(--dim);margin-top:4px;line-height:1.5"><span style="color:var(--purple)">bars</span> = what THE DRAFT actually emitted · <span style="color:var(--ink2)">outline</span> = the target distribution p. They converge because the algorithm is <b>exact</b>, at any γ, aligned or not — speed changes, the output distribution doesn't.</div>
+  </div>
+</div>
+
+<footer>
+  <b>What is real here:</b> the verification rule — accept a drafted token <i>x</i> with probability min(1, p(x)/q(x)); on the first rejection, resample from the normalized residual (p−q)₊ and stop. That is exactly <b>speculative / assisted decoding</b> (Leviathan et al.; Chen et al., 2023). The acceptance rate, tokens-per-pass, and the emitted histogram are all <b>measured live</b>. The dashed theoretical speedup is the closed form <b>E = (1−α<sup>γ+1</sup>)/(1−α)</b> for acceptance rate α. <span class="tag lit">LIT</span>
+  <div style="margin-top:8px"><b>What is a figure:</b> p and q are two fixed toy distributions over six "words," and each drafted position is drawn independently — a real draft model is autoregressive and its distribution shifts with context. The speedup uses an idealized cost model: one target pass verifies all γ in parallel, and the draft's own cost is treated as free. <span class="tag fig">FIG</span></div>
+  <div style="margin-top:8px"><b>Where it stops:</b> real wall-clock speedup depends on hardware, batch size, KV-cache handling, and how cheap and well-aligned the draft actually is; the exactness guarantee holds only when draft and target share a tokenizer and the sampling RNG is threaded correctly. Misalignment doesn't corrupt the output — it just wastes draft work. <span class="tag wall">WALL</span></div>
+  <div class="fdim" style="margin-top:10px">A sibling of <a href="../the-cleave/" style="color:var(--orange)">the cleave</a> (early-exit — cleave one token's depth) and <a href="../the-stitch/" style="color:var(--brass)">the stitch</a> (the sorter as a factory floor). Part of <b style="color:var(--brass)">A SCANNER DARKLY</b>. &ldquo;We see through a glass, darkly.&rdquo; · David Lee Wise (ROOT0) / TriPod LLC · with AVAN.</div>
+</footer>
+</div>
+<script>
+"use strict";
+(function(){
+const WORDS=["the","a","cat","dog","runs","rests"];
+const V=WORDS.length;
+const C={cyan:"#46c7d8",orange:"#f0913a",purple:"#b48ad8",ok:"#65d6a2",miss:"#e0705a",dim:"#7a83b0",ink:"#eaf1ff",ink2:"#aeb9e6",brass:"#e6c069"};
+const P=[0.34,0.10,0.20,0.15,0.13,0.08];                 // target p
+const Q={hi:[0.30,0.12,0.18,0.16,0.14,0.10],             // aligned draft
+         lo:[0.10,0.30,0.08,0.26,0.06,0.20]};            // misaligned draft
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+let rnd=mulberry32(9001);
+function sample(d){let r=rnd(),c=0;for(let i=0;i<d.length;i++){c+=d[i];if(r<c)return i;}return d.length-1;}
+function residual(p,q){const r=p.map((pi,i)=>Math.max(0,pi-q[i]));const Z=r.reduce((a,b)=>a+b,0)||1;return r.map(v=>v/Z);}
+
+let mode="hi", gamma=4;
+let passes=0, emitted=0, proposed=0, accepted=0, emitHist=new Array(V).fill(0);
+let tape=[];
+
+function alpha(){ const q=Q[mode]; let a=0; for(let i=0;i<V;i++) a+=Math.min(P[i],q[i]); return a; } // Σ min(p,q)
+function theoryTokPerPass(){ const a=alpha(); return (1-Math.pow(a,gamma+1))/(1-a); }
+
+function block(){
+  const q=Q[mode]; const seq=[];
+  for(let i=0;i<gamma;i++){
+    const x=sample(q); proposed++;
+    const acc=Math.min(1, P[x]/q[x]);
+    if(rnd()<acc){ seq.push({w:x,cls:'acc'}); accepted++; }
+    else{
+      seq.push({w:x,cls:'rej'});
+      const y=sample(residual(P,q)); seq.push({w:y,cls:'cor'});
+      passes++; commit(seq); return;
+    }
+  }
+  const y=sample(P); seq.push({w:y,cls:'bon'});   // all accepted -> free bonus from target
+  passes++; commit(seq);
+}
+function commit(seq){
+  tape.push(seq);
+  for(const t of seq){ if(t.cls!=='rej'){ emitted++; emitHist[t.w]++; } }
+  if(tape.length>60) tape=tape.slice(-60);
+  render();
+}
+
+const tapeEl=document.getElementById('tape'), hud=document.getElementById('hud');
+const dist=document.getElementById('dist'), dx=dist.getContext('2d');
+function render(){
+  // tape (last ~22 blocks)
+  const show=tape.slice(-22);
+  tapeEl.innerHTML=show.map(seq=>seq.map(t=>`<span class="tok ${t.cls}">${WORDS[t.w]}</span>`).join('')).join('<span style="color:#3a4270"> · </span>')||'<span style="color:var(--dim)">— press “one block” or “run” —</span>';
+  // hud
+  const accRate = proposed? accepted/proposed : 0;
+  const tpp = passes? emitted/passes : 0;
+  hud.innerHTML=
+    `<div><span class="k">acceptance rate </span><b class="big" style="color:${C.ok}">${(accRate*100).toFixed(1)}%</b><span class="k"> &nbsp;(theory α=${(alpha()*100).toFixed(0)}%)</span></div>`+
+    `<div><span class="k">tokens / target-pass </span><b class="big" style="color:${C.cyan}">${tpp.toFixed(2)}×</b><span class="k"> &nbsp;(theory ${theoryTokPerPass().toFixed(2)}×)</span></div>`+
+    `<div><span class="k">target passes </span><b>${passes}</b><span class="k"> → emitted </span><b>${emitted}</b><span class="k"> tokens</span></div>`+
+    `<div style="margin-top:4px;color:${C.dim}">vanilla decoding would need <b style="color:${C.ink2}">${emitted}</b> passes for those ${emitted} tokens — this used <b style="color:${C.cyan}">${passes}</b>.</div>`;
+  // exactness chart
+  const W=dist.width,H=dist.height,pad=18,bw=(W-2*pad)/V;
+  dx.clearRect(0,0,W,H);
+  const tot=emitted||1, mx=Math.max(...P,...emitHist.map(v=>v/tot))*1.15;
+  for(let i=0;i<V;i++){
+    const ef=emitHist[i]/tot;
+    const bh=ef/mx*(H-28);
+    dx.fillStyle=C.purple; dx.fillRect(pad+i*bw+4,H-14-bh,bw-8,bh);
+    // target outline
+    const th=P[i]/mx*(H-28);
+    dx.strokeStyle=C.ink2; dx.lineWidth=1.5;
+    dx.strokeRect(pad+i*bw+4,H-14-th,bw-8,th);
+    dx.fillStyle=C.dim; dx.font="9px ui-monospace,monospace"; dx.textAlign="center";
+    dx.fillText(WORDS[i],pad+i*bw+bw/2,H-3);
+  }
+}
+
+let anim=null;
+function run(){ if(anim){clearInterval(anim);anim=null;document.getElementById('run').textContent="▶▶ run";return;}
+  document.getElementById('run').textContent="⏸ stop"; anim=setInterval(block,140); }
+function reset(){ if(anim){clearInterval(anim);anim=null;document.getElementById('run').textContent="▶▶ run";}
+  rnd=mulberry32(9001); passes=emitted=proposed=accepted=0; emitHist=new Array(V).fill(0); tape=[]; render(); }
+
+document.querySelectorAll('#align button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('#align button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); mode=b.dataset.a; reset();
+});
+document.getElementById('gamma').oninput=function(){ gamma=+this.value; document.getElementById('gv').textContent=gamma; };
+document.getElementById('step').onclick=block;
+document.getElementById('run').onclick=run;
+document.getElementById('reset').onclick=reset;
+render();
+})();
+</script></body></html>
